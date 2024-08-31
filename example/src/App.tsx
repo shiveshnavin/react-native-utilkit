@@ -31,7 +31,7 @@ export default function App() {
         padding: 10
       }} />
       <Button title='Send' onPress={async () => {
-        const res = await (Utilkit.sendEvent(Utilkit.Channels.Transfers, JSON.stringify({ message: "TS says " + Date.now() })).catch(e => console.error(e)))
+        const res = await (Utilkit.sendEvent(Utilkit.Channels.Transfers, { message: "TS says " + Date.now() }).catch(e => console.error(e)))
         setResult(res || 'err')
       }}></Button>
     </View>

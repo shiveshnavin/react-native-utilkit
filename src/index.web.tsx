@@ -7,7 +7,7 @@ export function startService(payload: string): Promise<string> {
   throw new Error("startService Not implemented on web")
 }
 
-export function sendEvent(channel: string, payload: string): Promise<string> {
+export function sendEvent(channel: string, payload: object): Promise<string> {
   throw new Error("sendEvent Not implemented on web")
 }
 

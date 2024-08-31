@@ -7,9 +7,8 @@ let _Utilkit = {
   sendEvent: Web.sendEvent,
   initEventBus: Web.initEventBus
 }
-let EventManager: NativeEventEmitter = {
-
-} as any
+//@ts-ignore
+let EventManager: NativeEventEmitter = undefined
 
 if (Platform.OS != 'web') {
   const LINKING_ERROR =
@@ -38,9 +37,20 @@ export const Channels = {
   Echo: "Echo"
 }
 
+export type EventListener = (channel: string, payload: object) => void
+export type EmitterSubscription = { remove: () => void }
 export const UtilkitEvents = EventManager
-
 export const initEventBus = _Utilkit.initEventBus
 export const sendEvent = _Utilkit.sendEvent
+export const addListener = (channel: string, callback: EventListener): undefined | EmitterSubscription => {
+  if (EventManager != undefined) {
+    return EventManager.addListener(channel, (event: any) => {
+      callback(event.channel, event.payload)
+    })
+  }
+  return undefined
+}
+
+
 export const multiply = _Utilkit.multiply
 export const startService = _Utilkit.startService
