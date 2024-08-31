@@ -43,7 +43,7 @@
     "clean": "del-cli android/build example/android/build example/android/app/build example/ios/build lib",
     "prepare": "bob build",
     "build": "npm run prepare",
-    "release": "git add * && git add package.json && git commit -nm Release-New-Version | npm version patch && npm run build && npm publish && git add package.json && git commit -m Update-version | git push",
+    "release": "git add * && git add package.json && git commit -nm Release-New-Version && npm version patch && npm run build && npm publish && git add package.json && git commit -m Update-version && git push",
     "release-it": "release-it"
   },
   "keywords": [
