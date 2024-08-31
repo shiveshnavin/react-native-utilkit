@@ -19,7 +19,6 @@ import com.utilkit.lib.events.Channels
 import com.utilkit.lib.events.Event
 import com.utilkit.lib.events.EventBus
 import com.utilkit.lib.service.UtilkitForegroundService
-import com.utilkit.lib.service.UtilkitForegroundService.Companion.mViewModelStore
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -45,7 +44,7 @@ class UtilkitModule(reactContext: ReactApplicationContext) :
     if (eventBus == null) {
 
       eventBus = ViewModelProvider(
-        mViewModelStore,
+        EventBus.mViewModelStore,
         ViewModelProvider.AndroidViewModelFactory.getInstance(this.currentActivity?.application!!)
       )[EventBus::class.java]
 
