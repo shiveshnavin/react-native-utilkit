@@ -41,11 +41,18 @@ export type EventListener = (channel: string, payload: object) => void
 export type EmitterSubscription = { remove: () => void }
 export const UtilkitEvents = EventManager
 export const initEventBus = _Utilkit.initEventBus
-export const sendEvent = _Utilkit.sendEvent
+export const sendEvent = (channel: string, payload: object) => {
+  //@ts-ignore
+  return _Utilkit.sendEvent(channel, JSON.stringify(payload))
+}
 export const addListener = (channel: string, callback: EventListener): undefined | EmitterSubscription => {
   if (EventManager != undefined) {
     return EventManager.addListener(channel, (event: any) => {
-      callback(event.channel, event.payload)
+      let payload = event.payload
+      try {
+        payload = JSON.parse(event.payload)
+      } catch (e) { }
+      callback(event.channel, payload)
     })
   }
   return undefined
