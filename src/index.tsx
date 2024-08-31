@@ -1,5 +1,4 @@
 import { NativeModules, NativeEventEmitter, Platform } from 'react-native';
-
 import * as Web from './index.web'
 
 let _Utilkit = {
