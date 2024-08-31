@@ -1,2 +1,17 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:tools="http://schemas.android.com/tools">
+
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+
+  <application>
+    <service
+      tools:node="merge"
+      android:foregroundServiceType="dataSync"
+      android:name=".lib.service.UtilkitForegroundService"
+      android:enabled="true"
+      android:exported="true">
+
+    </service>
+  </application>
 </manifest>

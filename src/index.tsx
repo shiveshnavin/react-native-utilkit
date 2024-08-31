@@ -1,8 +1,9 @@
 import { NativeModules, Platform } from 'react-native';
-import { multiply as multiplyWeb } from './index.web'
+import * as Web from './index.web'
 
 let Utilkit = {
-  multiply: multiplyWeb
+  multiply: Web.multiply,
+  startService: Web.startService
 }
 
 if (Platform.OS != 'web') {
@@ -27,4 +28,9 @@ if (Platform.OS != 'web') {
 
 export function multiply(a: number, b: number): Promise<number> {
   return Utilkit.multiply(a, b);
+}
+
+
+export function startService(title: string): Promise<string> {
+  return Utilkit.startService(title);
 }
