@@ -7,13 +7,31 @@ export default function App() {
 
   useEffect(() => {
     Utilkit.multiply(3, 7).then(setResult);
+    Utilkit.initEventBus()
   }, []);
 
+  useEffect(() => {
+    const eventListener = Utilkit.UtilkitEvents.addListener(Utilkit.Channels.Transfers, (event: any) => {
+      setResult(event.payload);
+    });
+
+    // Cleanup the event listener on component unmount
+    return () => {
+      eventListener.remove();
+    };
+  }, []);
   return (
     <View style={styles.container}>
       <Text>Result: {result}</Text>
       <Button title='START' onPress={async () => {
         const res = await (Utilkit.startService('Lets go').catch(e => console.error(e)))
+        setResult(res || 'err')
+      }}></Button>
+      <View style={{
+        padding: 10
+      }} />
+      <Button title='Send' onPress={async () => {
+        const res = await (Utilkit.sendEvent(Utilkit.Channels.Transfers, JSON.stringify({ message: "TS says " + Date.now() })).catch(e => console.error(e)))
         setResult(res || 'err')
       }}></Button>
     </View>

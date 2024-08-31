@@ -1,10 +1,16 @@
-import { NativeModules, Platform } from 'react-native';
+import { NativeModules, NativeEventEmitter, Platform } from 'react-native';
+
 import * as Web from './index.web'
 
-let Utilkit = {
+let _Utilkit = {
   multiply: Web.multiply,
-  startService: Web.startService
+  startService: Web.startService,
+  sendEvent: Web.sendEvent,
+  initEventBus: Web.initEventBus
 }
+let EventManager: NativeEventEmitter = {
+
+} as any
 
 if (Platform.OS != 'web') {
   const LINKING_ERROR =
@@ -13,7 +19,7 @@ if (Platform.OS != 'web') {
     '- You rebuilt the app after installing the package\n' +
     '- You are not using Expo Go\n';
 
-  Utilkit = NativeModules.Utilkit
+  _Utilkit = NativeModules.Utilkit
     ? NativeModules.Utilkit
     : new Proxy(
       {},
@@ -23,14 +29,19 @@ if (Platform.OS != 'web') {
         },
       }
     );
+  EventManager = new NativeEventEmitter(NativeModules.Utilkit);
 
 }
 
-export function multiply(a: number, b: number): Promise<number> {
-  return Utilkit.multiply(a, b);
+export const Channels = {
+  Transfers: "Transfers",
+  Generic: "Generic",
+  Echo: "Echo"
 }
 
+export const UtilkitEvents = EventManager
 
-export function startService(title: string): Promise<string> {
-  return Utilkit.startService(title);
-}
+export const initEventBus = _Utilkit.initEventBus
+export const sendEvent = _Utilkit.sendEvent
+export const multiply = _Utilkit.multiply
+export const startService = _Utilkit.startService
