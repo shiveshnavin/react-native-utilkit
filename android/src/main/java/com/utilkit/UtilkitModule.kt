@@ -1,7 +1,6 @@
 package com.utilkit
 
 import android.app.Activity
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
@@ -35,9 +34,13 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
-import java.nio.ByteBuffer
-import java.nio.channels.FileChannel
-import com.facebook.react.bridge.Callback
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.Response
+import okhttp3.Call
+import org.json.JSONObject
 
 
 @Suppress("UNCHECKED_CAST")
@@ -46,11 +49,12 @@ class UtilkitModule(reactContext: ReactApplicationContext) :
 
   var eventBus: EventBus? = null
   var transferModel: FileTransferModel? = null
+  var client = OkHttpClient()
 
   companion object {
     const val NAME = "Utilkit"
     val gson = Gson()
-    val STORAGE_PERMISSION_REQUEST_CODE = 1001
+    val PERMISSION_REQUEST_CODE = 1001
   }
 
   override fun getName(): String {
@@ -63,49 +67,108 @@ class UtilkitModule(reactContext: ReactApplicationContext) :
   }
 
   @ReactMethod
-  fun readFileChunk(fileUri: String, offset: Int, chunkSize: Int, callback: Callback) {
+  fun readAndUploadChunk(
+    uploadUrl: String,
+    headers: String,
+    bytesProcessed: Int,
+    totalBytes: Int,
+    chunkSize: Int,
+    file: String,
+    onComplete: Promise
+  ) {
+    val filePath = JSONObject(file).optString("uri")
+    if (filePath.isBlank()) {
+      onComplete.reject(RuntimeException("File path=$filePath is invalid"))
+      return
+    }
+    val localFile = File(filePath)
+
+    if (!localFile.exists()) {
+      onComplete.reject(RuntimeException("File not found"))
+      return
+    }
+
     try {
-      val fileInputStream = FileInputStream(fileUri)
-      val fileChannel: FileChannel = fileInputStream.channel
-      val buffer = ByteBuffer.allocate(chunkSize)
-      fileChannel.position(offset.toLong())
-      val bytesRead = fileChannel.read(buffer)
+      val fileInputStream = FileInputStream(localFile)
+      fileInputStream.skip(bytesProcessed.toLong())
+      val buffer = ByteArray(chunkSize)
+      val bytesRead = fileInputStream.read(buffer)
+      fileInputStream.close()
 
       if (bytesRead > 0) {
-        val byteArray = ByteArray(bytesRead)
-        buffer.flip()
-        buffer.get(byteArray)
-        fileInputStream.close()
-        callback.invoke(null, byteArray)
+        val requestBody =
+          buffer.toRequestBody("application/octet-stream".toMediaTypeOrNull(), 0, bytesRead)
+
+        val requestBuilder = Request.Builder()
+          .url(uploadUrl)
+          .post(requestBody)
+
+        val headersJson = JSONObject(headers)
+        headersJson.keys().forEach {
+          val value = headersJson.getString(it)
+          requestBuilder.addHeader(it, value)
+        }
+
+        val request = requestBuilder.build()
+
+        client.newCall(request).enqueue(object : okhttp3.Callback {
+          override fun onFailure(call: Call, e: IOException) {
+            Log.e("Utilkit", "Upload Err: ${e.message}")
+            onComplete.reject(e)
+          }
+
+          override fun onResponse(call: Call, response: Response) {
+            val body = response.body?.string()
+            onComplete.resolve(
+              gson.toJson(
+                mapOf(
+                  "status" to response.code,
+                  "body" to body,
+                  "headers" to response.headers
+                )
+              )
+            )
+          }
+        })
       } else {
-        fileInputStream.close()
-        callback.invoke("No data read", null)
+        onComplete.reject(RuntimeException("No data read"))
       }
     } catch (e: IOException) {
-      callback.invoke(e.message, null)
+      onComplete.reject(e)
     }
   }
 
 
-  fun checkPermission(context: Activity) {
-    val permissions = arrayOf(
-      android.Manifest.permission.READ_EXTERNAL_STORAGE,
-      android.Manifest.permission.WRITE_EXTERNAL_STORAGE
-    )
+  @ReactMethod
+  fun checkPermission(permissionsCsv: String, promise: Promise?) {
+    val context = this.currentActivity
+    if (context == null) {
+      promise?.reject(RuntimeException("Unable to start in background"))
+      return
+    }
+    val permissions = permissionsCsv.split(",").map { it.trim() }
 
     if (permissions.any {
         ContextCompat.checkSelfPermission(context, it) != PackageManager.PERMISSION_GRANTED
       }) {
       if (permissions.any {
-          ActivityCompat.shouldShowRequestPermissionRationale(context as Activity, it)
+          ActivityCompat.shouldShowRequestPermissionRationale(context, it)
         }) {
-        ActivityCompat.requestPermissions(context, permissions, STORAGE_PERMISSION_REQUEST_CODE)
+        ActivityCompat.requestPermissions(
+          context,
+          permissions.toTypedArray(),
+          PERMISSION_REQUEST_CODE
+        )
       } else {
-        ActivityCompat.requestPermissions(context, permissions, STORAGE_PERMISSION_REQUEST_CODE)
+        ActivityCompat.requestPermissions(
+          context,
+          permissions.toTypedArray(),
+          PERMISSION_REQUEST_CODE
+        )
       }
+      promise?.resolve("requested")
     } else {
-      // All permissions are granted
-      // ... proceed with your logic
+      promise?.resolve("granted")
     }
   }
 
@@ -113,7 +176,11 @@ class UtilkitModule(reactContext: ReactApplicationContext) :
   fun initEventBus(promise: Promise) {
     try {
       if (eventBus == null) {
-        checkPermission(this.currentActivity as Activity)
+        checkPermission(
+          "android.permission.READ_EXTERNAL_STORAGE," +
+                        "android.permission.WRITE_EXTERNAL_STORAGE",
+          null
+        )
         eventBus = ViewModelProvider(
           EventBus.mViewModelStore,
           ViewModelProvider.AndroidViewModelFactory.getInstance(this.currentActivity?.application!!)

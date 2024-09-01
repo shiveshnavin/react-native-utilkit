@@ -1,4 +1,6 @@
 //@ts-nocheck
+import type { AxiosProgressEvent, AxiosResponse } from "axios";
+
 export function multiply(a: number, b: number): Promise<number> {
   return Promise.resolve(a * b);
 }
@@ -23,6 +25,43 @@ export const download = function (
   targetPath?: string,
   listener?: FileOpListener): Promise<FileTransferResult> {
   throw new Error("download Not implemented on web")
+}
+
+type Base64String = string
+export const readAndUploadChunk: UploadChunkProxy = (
+  uploadUrl: string,
+  headers: any,
+  bytesProcessed: number,
+  totalBytes: number,
+  chunkSize: number,
+  file: PickedFile,
+  onUploadProgress: (progressEvent: AxiosProgressEvent) => void) => {
+  throw new Error("readFileChunk Not implemented on web")
+}
+
+
+
+export type UploadChunkProxy = (
+  uploadUrl: string,
+  headers: any,
+  bytesProcessed: number,
+  totalBytes: number,
+  chunkSize: number,
+  file: PickedFile,
+  onUploadProgress: (progressEvent: AxiosProgressEvent) => void) => Promise<AxiosResponse>
+
+
+export type PickedFile = {
+  id: string,
+  mimeType: string,
+  name: string,
+  size: number,
+  uri: string, // File Uri or Base64 Uri
+  updated?: string
+  webFile?: any
+  reader: {
+    getChunk: (offset: number, chunkSize: number) => Promise<Uint8Array>
+  }
 }
 
 export type FileOpListener = (update: FileTransferResult, cancle?: () => void) => void

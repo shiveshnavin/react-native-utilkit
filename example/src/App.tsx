@@ -5,7 +5,7 @@ import type { CloudProvider, FileTransferResult } from '../../src/web';
 
 export default function App() {
   const [result, setResult] = useState<number | string | undefined>();
-
+  const [counter, setCounter] = useState(0)
   useEffect(() => {
     Utilkit.multiply(3, 7).then(setResult);
     Utilkit.initEventBus()
@@ -31,21 +31,22 @@ export default function App() {
   }, []);
   return (
     <View style={styles.container}>
+      <Button title={`${counter}`} onPress={async () => {
+        setCounter(counter + 1)
+      }}></Button>
+      <View style={{ padding: 10 }} />
+
       <Text>Result: {result}</Text>
       <Button title='START' onPress={async () => {
         const res = await (Utilkit.startService('Lets go').catch(e => console.error(e)))
         setResult(res || 'err')
       }}></Button>
-      <View style={{
-        padding: 10
-      }} />
+      <View style={{ padding: 10 }} />
       <Button title='Send' onPress={async () => {
         const res = await (Utilkit.sendEvent(Utilkit.Channels.Transfers, { message: "TS says " + Date.now() }).catch(e => console.error(e)))
         setResult(res || 'err')
       }}></Button>
-      <View style={{
-        padding: 10
-      }} />
+      <View style={{ padding: 10 }} />
       <Button title='Download' onPress={async () => {
         const res: FileTransferResult = await Utilkit.download(
           {
@@ -64,7 +65,57 @@ export default function App() {
         )
         setResult(res.status)
       }}></Button>
-    </View>
+
+
+
+      <View style={{ padding: 10 }} />
+      <Button title='Read file' onPress={
+        async () => {
+          let chunkSize = 1 * 1024 * 1024
+          let readed: string = await new Promise((resolve, reject) => {
+            Utilkit.readAndUploadChunk('https://content.dropboxapi.com/2/files/upload_session/finish',
+              {
+                "authorization": `Bearer sl.XXX`,
+                "dropbox-api-arg": {
+                  "commit": {
+                    "autorename": true, "mode": "add", "mute": false,
+                    "path": `/PaperDrive/notebooks/10047/page-1/${Date.now()}_7760__test.avi`,
+                    "strict_conflict": false
+                  },
+                  "cursor": {
+                    "offset": 0,
+                    "session_id": "pid_upload_session:XXX"
+                  }
+                }
+              },
+              0,
+              90034176,
+              chunkSize,
+              {
+                uri: '/storage/emulated/0/Download/test.avi',
+                name: 'test.avi',
+                size: 90034176,
+                id: '__test__',
+                mimeType: 'video/avi',
+                reader: {
+                  getChunk() {
+                    return [] as any
+                  }
+                }
+
+              },
+              (e) => {
+                setResult(JSON.stringify(e))
+              }
+            ).then(r => {
+              // setResult(JSON.stringify(r))
+            }).catch((e) => {
+              // setResult(JSON.stringify(e))
+            })
+          })
+        }
+      }></Button>
+    </View >
   );
 }
 

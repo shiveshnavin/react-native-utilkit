@@ -1,12 +1,15 @@
 import { NativeModules, NativeEventEmitter, Platform } from 'react-native';
 import * as Web from './web'
+import type { PickedFile } from './web';
+import type { AxiosProgressEvent, AxiosResponse } from 'axios';
 
 let _Utilkit = {
   multiply: Web.multiply,
   startService: Web.startService,
   sendEvent: Web.sendEvent,
   initEventBus: Web.initEventBus,
-  download: Web.download
+  download: Web.download,
+  readAndUploadChunk: Web.readAndUploadChunk
 }
 //@ts-ignore
 let EventManager: NativeEventEmitter = undefined
@@ -60,6 +63,35 @@ export const addListener = (channel: string, callback: EventListener): undefined
 }
 
 
+
+export const readAndUploadChunk = (
+  uploadUrl: string,
+  headers: any,
+  bytesProcessed: number,
+  totalBytes: number,
+  chunkSize: number,
+  file: PickedFile,
+  onUploadProgress: (progressEvent: AxiosProgressEvent) => void) => {
+  if (Platform.OS == 'web') {
+    return _Utilkit.readAndUploadChunk
+      (uploadUrl, headers, bytesProcessed, totalBytes, chunkSize, file, onUploadProgress)
+  }
+  return new Promise((resolve, reject) => {
+    //@ts-ignore
+    _Utilkit.readAndUploadChunk(uploadUrl, JSON.stringify(headers), bytesProcessed, totalBytes, chunkSize, JSON.stringify(file)).then((response: AxiosResponse) => {
+      onUploadProgress({
+        loaded: Math.min(chunkSize, (totalBytes - bytesProcessed)),
+        bytes: Math.min(bytesProcessed + chunkSize - 1, totalBytes),
+        lengthComputable: true
+      })
+      if (response.status >= 400) {
+        reject(response)
+      } else {
+        resolve(response)
+      }
+    })
+  })
+}
 export const download = (
   cloudFile: Web.CloudFile,
   url: string,
