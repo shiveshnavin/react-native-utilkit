@@ -71,11 +71,34 @@ export default function App() {
       <View style={{ padding: 10 }} />
       <Button title='Read file' onPress={
         async () => {
+          /**
+           * 
+ content://com.android.providers.media.documents/document/video%3A1000068137
+https://content.dropboxapi.com/2/files/upload_session/finish content://com.android.providers.media.documents/document/document%3A1000068061
+
+ content://com.android.providers.downloads.documents/document/msf%3A1000068118
+
+
+
+
+
+
+
+
+
+
+
+
+
+https://content.dropboxapi.com/2/files/upload_session/finish file:///data/user/0/com.mypaperdrive.app/cache/ImagePicker/fa8d6b64-f499-4a3b-8fd2-c6de901655db.jpeg
+ content://com.android.providers.downloads.documents/document/msf%3A1000068137
+
+           */
           let chunkSize = 1 * 1024 * 1024
           let readed: string = await new Promise((resolve, reject) => {
             Utilkit.readAndUploadChunk('https://content.dropboxapi.com/2/files/upload_session/finish',
               {
-                "authorization": `Bearer sl.XXX`,
+                "authorization": `Bearer sl.B8Ek3Uq92R9KVDLG1DwORQS2LFU1GDOS5mg765DdAgGlvhHj4uw7XxuWXTDYabtlD9gyfNuIKSEtyaFTggRZdn63b0WeNh_77jOWMWCwp21u_H-hck-mtH3c66M2pSvIeiJecDJoxaeMQEw`,
                 "dropbox-api-arg": {
                   "commit": {
                     "autorename": true, "mode": "add", "mute": false,
@@ -84,7 +107,7 @@ export default function App() {
                   },
                   "cursor": {
                     "offset": 0,
-                    "session_id": "pid_upload_session:XXX"
+                    "session_id": "pid_upload_session:ABIIMsXX4LizTOaAU-KhEpCzET6xfJD-6abtqC-RV4044tq8GQ"
                   }
                 }
               },
@@ -92,7 +115,7 @@ export default function App() {
               90034176,
               chunkSize,
               {
-                uri: '/storage/emulated/0/Download/test.avi',
+                uri: 'content://com.android.providers.downloads.documents/document/msf%3A1000068137',// '/storage/emulated/0/Download/test.avi',
                 name: 'test.avi',
                 size: 90034176,
                 id: '__test__',

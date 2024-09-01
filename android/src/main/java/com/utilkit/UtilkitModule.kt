@@ -27,6 +27,7 @@ import com.utilkit.lib.service.transfers.CloudFile
 import com.utilkit.lib.service.transfers.CloudProvider
 import com.utilkit.lib.service.transfers.DownloadManagerService
 import com.utilkit.lib.service.transfers.FileTransferModel
+import com.utilkit.lib.service.transfers.readChunk
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -81,19 +82,15 @@ class UtilkitModule(reactContext: ReactApplicationContext) :
       onComplete.reject(RuntimeException("File path=$filePath is invalid"))
       return
     }
-    val localFile = File(filePath)
-
-    if (!localFile.exists()) {
-      onComplete.reject(RuntimeException("File not found"))
-      return
-    }
 
     try {
-      val fileInputStream = FileInputStream(localFile)
-      fileInputStream.skip(bytesProcessed.toLong())
+//      val localFile = File(filePath)
+//      if (!localFile.exists()) {
+//        onComplete.reject(RuntimeException("File not found at $localFile"))
+//        return
+//      }
       val buffer = ByteArray(chunkSize)
-      val bytesRead = fileInputStream.read(buffer)
-      fileInputStream.close()
+      val bytesRead = readChunk(reactApplicationContext, filePath, bytesProcessed, buffer)
 
       if (bytesRead > 0) {
         val requestBody =
@@ -178,7 +175,7 @@ class UtilkitModule(reactContext: ReactApplicationContext) :
       if (eventBus == null) {
         checkPermission(
           "android.permission.READ_EXTERNAL_STORAGE," +
-                        "android.permission.WRITE_EXTERNAL_STORAGE",
+            "android.permission.WRITE_EXTERNAL_STORAGE",
           null
         )
         eventBus = ViewModelProvider(
