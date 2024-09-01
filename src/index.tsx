@@ -9,7 +9,8 @@ let _Utilkit = {
   sendEvent: Web.sendEvent,
   initEventBus: Web.initEventBus,
   download: Web.download,
-  readAndUploadChunk: Web.readAndUploadChunk
+  readAndUploadChunk: Web.readAndUploadChunk,
+  pickFile: Web.pickFile
 }
 //@ts-ignore
 let EventManager: NativeEventEmitter = undefined
@@ -117,6 +118,13 @@ export const download = (
   return _Utilkit.download(JSON.stringify(cloudFile), url, JSON.stringify(headers), JSON.stringify(provider), targetPath, sourcePath).then(status => JSON.parse(status))
 }
 
+export const pickFile = (mime: string) => {
+  if (Platform.OS == 'web') {
+    return Web.pickFile(mime)
+  }
+  //@ts-ignore
+  return _Utilkit.pickFile(mime).then(r => JSON.parse(r))
+}
 
 export const multiply = _Utilkit.multiply
 export const startService = _Utilkit.startService

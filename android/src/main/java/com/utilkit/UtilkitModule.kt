@@ -115,13 +115,16 @@ class UtilkitModule(reactContext: ReactApplicationContext) :
           }
 
           override fun onResponse(call: Call, response: Response) {
-            val body = response.body?.string()
+            val data = response.body?.string()
+            val responseHeaders = response.headers.toMultimap().map { (name, values) ->
+              name to values.joinToString(",")
+            }.toMap()
             onComplete.resolve(
               gson.toJson(
                 mapOf(
                   "status" to response.code,
-                  "body" to body,
-                  "headers" to response.headers
+                  "data" to data,
+                  "headers" to responseHeaders
                 )
               )
             )

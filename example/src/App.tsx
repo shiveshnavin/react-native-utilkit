@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, Button } from 'react-native';
 import * as Utilkit from 'react-native-utilkit';
 import type { CloudProvider, FileTransferResult } from '../../src/web';
+import * as DocumentPicker from 'expo-document-picker';
 
 export default function App() {
   const [result, setResult] = useState<number | string | undefined>();
@@ -94,6 +95,8 @@ https://content.dropboxapi.com/2/files/upload_session/finish file:///data/user/0
  content://com.android.providers.downloads.documents/document/msf%3A1000068137
 
            */
+          let results = await Utilkit.pickFile('*/*')
+          console.log('picker results', results)
           let chunkSize = 1 * 1024 * 1024
           let readed: string = await new Promise((resolve, reject) => {
             Utilkit.readAndUploadChunk('https://content.dropboxapi.com/2/files/upload_session/finish',

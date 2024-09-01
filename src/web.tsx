@@ -17,6 +17,10 @@ export function initEventBus(): Promise<string> {
   throw new Error("initEventBus Not implemented on web")
 }
 
+export function pickFile(payload: string): Promise<PickedFile> {
+  throw new Error("pickFile Not implemented on web")
+}
+
 export const download = function (
   cloudFile: any,
   url: string,
