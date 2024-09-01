@@ -109,7 +109,7 @@ class UtilkitModule(reactContext: ReactApplicationContext) :
             val emitterParams = Arguments.createMap()
             emitterParams.putString("channel", Channels.Transfers)
             emitterParams.putString("payload", gson.toJson(transferResults))
-            Log.d("Utilkit", "transferResults Running ${transferResults.size} downloads")
+            // Log.d("Utilkit", "transferResults Running ${transferResults.size} downloads")
             sendEventToReact(reactApplicationContext, Channels.Transfers, emitterParams)
           }
         }
