@@ -33,6 +33,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import java.io.File
+import java.io.FileInputStream
+import java.io.IOException
+import java.nio.ByteBuffer
+import java.nio.channels.FileChannel
+import com.facebook.react.bridge.Callback
 
 
 @Suppress("UNCHECKED_CAST")
@@ -55,6 +60,30 @@ class UtilkitModule(reactContext: ReactApplicationContext) :
   @ReactMethod
   fun multiply(a: Double, b: Double, promise: Promise) {
     promise.resolve(a * b)
+  }
+
+  @ReactMethod
+  fun readFileChunk(fileUri: String, offset: Int, chunkSize: Int, callback: Callback) {
+    try {
+      val fileInputStream = FileInputStream(fileUri)
+      val fileChannel: FileChannel = fileInputStream.channel
+      val buffer = ByteBuffer.allocate(chunkSize)
+      fileChannel.position(offset.toLong())
+      val bytesRead = fileChannel.read(buffer)
+
+      if (bytesRead > 0) {
+        val byteArray = ByteArray(bytesRead)
+        buffer.flip()
+        buffer.get(byteArray)
+        fileInputStream.close()
+        callback.invoke(null, byteArray)
+      } else {
+        fileInputStream.close()
+        callback.invoke("No data read", null)
+      }
+    } catch (e: IOException) {
+      callback.invoke(e.message, null)
+    }
   }
 
 
