@@ -1,7 +1,7 @@
 import { NativeModules, NativeEventEmitter, Platform } from 'react-native';
 import * as Web from './web'
 import type { PickedFile } from './web';
-import type { AxiosProgressEvent, AxiosResponse } from 'axios';
+import type { AxiosProgressEvent } from 'axios';
 
 let _Utilkit = {
   multiply: Web.multiply,
