@@ -79,12 +79,18 @@ export const readAndUploadChunk = (
   }
   return new Promise((resolve, reject) => {
     //@ts-ignore
-    _Utilkit.readAndUploadChunk(uploadUrl, JSON.stringify(headers), bytesProcessed, totalBytes, chunkSize, JSON.stringify(file)).then((response: AxiosResponse) => {
+    _Utilkit.readAndUploadChunk(uploadUrl, JSON.stringify(headers), bytesProcessed, totalBytes, chunkSize, JSON.stringify(file)).then((response: any) => {
       onUploadProgress({
         loaded: Math.min(chunkSize, (totalBytes - bytesProcessed)),
         bytes: Math.min(bytesProcessed + chunkSize - 1, totalBytes),
         lengthComputable: true
       })
+      try {
+        response = JSON.parse(response)
+        response.data = JSON.parse(response.data)
+      } catch (e) {
+
+      }
       if (response.status >= 400) {
         reject(response)
       } else {
