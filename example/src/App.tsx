@@ -115,8 +115,7 @@ https://content.dropboxapi.com/2/files/upload_session/finish file:///data/user/0
               90034176,
               chunkSize,
               {
-
-                uri: 'content://com.android.providers.downloads.documents/document/msf%3A1000068137',// '/storage/emulated/0/Download/test.avi',
+                uri: 'content://com.android.providers.downloads.documents/document/msf%3A1000068137',
                 name: 'test.avi',
                 size: 90034176,
                 id: '__test__',
@@ -126,7 +125,6 @@ https://content.dropboxapi.com/2/files/upload_session/finish file:///data/user/0
                     return [] as any
                   }
                 }
-
               },
               (e) => {
                 setResult(JSON.stringify(e))
