@@ -20,7 +20,6 @@ export default function App() {
           progress: `${(100 * pl.bytesProcessed / pl.totalBytes).toFixed(2)}%`
         }
       })
-      console.log('Native ev', pl)
       if (pl) {
         setResult(JSON.stringify(pl));
       }
