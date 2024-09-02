@@ -100,6 +100,7 @@ https://content.dropboxapi.com/2/files/upload_session/finish file:///data/user/0
           let chunkSize = 1 * 1024 * 1024
           let readed: string = await new Promise((resolve, reject) => {
             Utilkit.readAndUploadChunk('https://content.dropboxapi.com/2/files/upload_session/finish',
+              "post",
               {
                 "authorization": `Bearer sl.B8Ek3Uq92R9KVDLG1DwORQS2LFU1GDOS5mg765DdAgGlvhHj4uw7XxuWXTDYabtlD9gyfNuIKSEtyaFTggRZdn63b0WeNh_77jOWMWCwp21u_H-hck-mtH3c66M2pSvIeiJecDJoxaeMQEw`,
                 "dropbox-api-arg": {
@@ -114,13 +115,14 @@ https://content.dropboxapi.com/2/files/upload_session/finish file:///data/user/0
                   }
                 }
               },
+              undefined,
               0,
-              90034176,
+              978355,
               chunkSize,
               {
-                uri: '/storage/emulated/0/Download/test.avi',
-                name: 'test.avi',
-                size: 90034176,
+                uri: '/storage/emulated/0/Download/space_out.mp4',
+                name: 'space_out.mp4',
+                size: 978355,
                 id: '__test__',
                 mimeType: 'video/avi',
                 reader: {

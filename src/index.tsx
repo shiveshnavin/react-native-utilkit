@@ -84,7 +84,7 @@ export const readAndUploadChunk = (
       uploadUrl,
       method,
       JSON.stringify(headers),
-      JSON.stringify(multipartBody),
+      multipartBody == undefined ? "" : JSON.stringify(multipartBody),
       bytesProcessed,
       totalBytes,
       chunkSize,
