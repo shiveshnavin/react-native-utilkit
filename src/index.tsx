@@ -64,7 +64,6 @@ export const addListener = (channel: string, callback: EventListener): undefined
 }
 
 
-
 export const readAndUploadChunk = (
   uploadUrl: string,
   method: string,
