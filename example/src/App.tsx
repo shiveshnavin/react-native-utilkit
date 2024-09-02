@@ -72,6 +72,9 @@ export default function App() {
       <View style={{ padding: 10 }} />
       <Button title='Read file' onPress={
         async () => {
+          Utilkit.hash('file:///storage/emulated/0/Download/test.avi', 'sha-1')
+            .then(console.error)
+          return
           /**
            * 
  content://com.android.providers.media.documents/document/video%3A1000068137
