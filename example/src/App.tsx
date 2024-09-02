@@ -98,16 +98,19 @@ https://content.dropboxapi.com/2/files/upload_session/finish file:///data/user/0
           let chunkSize = 200 * 1024 * 1024
           let readed: string = await new Promise((resolve, reject) => {
             Utilkit.readAndUploadChunk(
-              'https://upload.app.box.com/api/2.0/files/upload_sessions/F7330B60FEBC97025A57F4A8127D1488',
+              'https://upload.app.box.com/api/2.0/files/upload_sessions/264C8C8C7712FAE9CADC6AA7714D2FBA',
               "put",
               {
-                "authorization": `Bearer zedtpw1yPF97R9rG5G4mP3fKQppj8voX`,
+                "content-range": "bytes 0-8388607/51511042",
+                "authorization": `Bearer XXX`,
                 "digest": "sha=@digest:sha-1@"
               },
-              {
-                "attributes": `{\"name\":\"tportable-x64.4.9.4.mp4\",\"parent\":{\"id\":\"281281698815\"},\"content_created_at\":\"2024-12-12T10:53:43-08:00\",\"content_modified_at\":\"2024-12-12T10:53:43-08:00\"}`,
-                "file": "@file"
-              },
+              // {
+              //   "attributes": `{\"name\":\"tportable-x64.4.9.4.mp4\",\"parent\":{\"id\":\"281281698815\"},\"content_created_at\":\"2024-12-12T10:53:43-08:00\",\"content_modified_at\":\"2024-12-12T10:53:43-08:00\"}`,
+              //   "file": "@file"
+              // }
+              undefined
+              ,
               0,
               51511042,
               8388608,
