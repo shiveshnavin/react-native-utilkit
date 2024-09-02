@@ -70,6 +70,7 @@ class UtilkitModule(reactContext: ReactApplicationContext) :
   @ReactMethod
   fun readAndUploadChunk(
     uploadUrl: String,
+    method: String,
     headers: String,
     bytesProcessed: Int,
     totalBytes: Int,
@@ -96,9 +97,18 @@ class UtilkitModule(reactContext: ReactApplicationContext) :
         val requestBody =
           buffer.toRequestBody("application/octet-stream".toMediaTypeOrNull(), 0, bytesRead)
 
-        val requestBuilder = Request.Builder()
-          .url(uploadUrl)
-          .post(requestBody)
+        var requestBuilder = Request.Builder()
+          .url(uploadUrl);
+
+        requestBuilder = when(method){
+          "get" -> requestBuilder.get()
+          "put" -> requestBuilder.put(requestBody)
+          "patch" -> requestBuilder.patch(requestBody)
+          "delete" -> requestBuilder.delete(requestBody)
+          else -> {
+            requestBuilder.post(requestBody)
+          }
+        }
 
         val headersJson = JSONObject(headers)
         headersJson.keys().forEach {
@@ -108,6 +118,7 @@ class UtilkitModule(reactContext: ReactApplicationContext) :
 
         val request = requestBuilder.build()
 
+        Log.d("Utilkit", "Uploading chunk $bytesProcessed/$totalBytes @ ${request.method} ${request.url} ${request.headers} length=${request.body?.contentLength()}")
         client.newCall(request).enqueue(object : okhttp3.Callback {
           override fun onFailure(call: Call, e: IOException) {
             Log.e("Utilkit", "Upload Err: ${e.message}")

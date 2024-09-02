@@ -34,6 +34,7 @@ export const download = function (
 type Base64String = string
 export const readAndUploadChunk: UploadChunkProxy = (
   uploadUrl: string,
+  method: string,
   headers: any,
   bytesProcessed: number,
   totalBytes: number,
@@ -47,6 +48,7 @@ export const readAndUploadChunk: UploadChunkProxy = (
 
 export type UploadChunkProxy = (
   uploadUrl: string,
+  method: string,
   headers: any,
   bytesProcessed: number,
   totalBytes: number,
