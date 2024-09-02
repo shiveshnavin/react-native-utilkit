@@ -68,6 +68,7 @@ export const readAndUploadChunk = (
   uploadUrl: string,
   method: string,
   headers: any,
+  multipartBody: any,
   bytesProcessed: number,
   totalBytes: number,
   chunkSize: number,
@@ -75,11 +76,20 @@ export const readAndUploadChunk = (
   onUploadProgress: (progressEvent: AxiosProgressEvent) => void) => {
   if (Platform.OS == 'web') {
     return _Utilkit.readAndUploadChunk
-      (uploadUrl, method, headers, bytesProcessed, totalBytes, chunkSize, file, onUploadProgress)
+      (uploadUrl, method, headers, multipartBody, bytesProcessed, totalBytes, chunkSize, file, onUploadProgress)
   }
   return new Promise((resolve, reject) => {
     //@ts-ignore
-    _Utilkit.readAndUploadChunk(uploadUrl, method, JSON.stringify(headers), bytesProcessed, totalBytes, chunkSize, JSON.stringify(file)).then((response: any) => {
+    _Utilkit.readAndUploadChunk(
+      uploadUrl,
+      method,
+      JSON.stringify(headers),
+      JSON.stringify(multipartBody),
+      bytesProcessed,
+      totalBytes,
+      chunkSize,
+      JSON.stringify(file)
+    ).then((response: any) => {
       onUploadProgress({
         loaded: Math.min(chunkSize, (totalBytes - bytesProcessed)),
         bytes: Math.min(bytesProcessed + chunkSize - 1, totalBytes),

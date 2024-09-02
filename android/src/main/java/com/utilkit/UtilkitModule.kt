@@ -1,6 +1,5 @@
 package com.utilkit
 
-import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
@@ -32,8 +31,6 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import java.io.File
-import java.io.FileInputStream
 import java.io.IOException
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
@@ -41,7 +38,11 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import okhttp3.Call
+import okhttp3.MultipartBody
 import org.json.JSONObject
+import java.io.File
+import java.math.BigInteger
+import java.security.MessageDigest
 
 
 @Suppress("UNCHECKED_CAST")
@@ -67,17 +68,57 @@ class UtilkitModule(reactContext: ReactApplicationContext) :
     promise.resolve(a * b)
   }
 
+  private fun md5(bytes: ByteArray): String {
+    val md = MessageDigest.getInstance("MD5")
+    val digest = md.digest(bytes)
+    val bigInt = BigInteger(1, digest)
+    return bigInt.toString(16).padStart(32, '0')
+  }
+
+  private fun getMultipartBody(
+    fileName: String,
+    multipartBodyJson: String,
+    buffer: ByteArray,
+    bytesRead: Int
+  ): MultipartBody {
+    var md5Value = ""
+    val multipartJson = JSONObject(multipartBodyJson)
+    val multipartBodyBuilder = MultipartBody.Builder().setType(MultipartBody.FORM)
+    for (key in multipartJson.keys()) {
+      var value = multipartJson.getString(key)
+
+      if (value == "@file") {
+        val fileContentRequestBody =
+          buffer.toRequestBody("application/octet-stream".toMediaTypeOrNull(), 0, bytesRead)
+        multipartBodyBuilder.addFormDataPart(key, fileName, fileContentRequestBody)
+      } else {
+        if (value.contains(_MD5)) {
+          if (md5Value.isBlank()) {
+            md5Value = md5(buffer)
+          }
+          value = value.replace(_MD5, md5Value)
+        }
+        multipartBodyBuilder.addFormDataPart(key, value)
+      }
+    }
+    return multipartBodyBuilder.build()
+  }
+
+  val _MD5 = "@md5"
+
   @ReactMethod
   fun readAndUploadChunk(
     uploadUrl: String,
     method: String,
     headers: String,
+    multipartBody: String,
     bytesProcessed: Int,
     totalBytes: Int,
     chunkSize: Int,
     file: String,
     onComplete: Promise
   ) {
+    var md5Value = ""
     val filePath = JSONObject(file).optString("uri")
     if (filePath.isBlank()) {
       onComplete.reject(RuntimeException("File path=$filePath is invalid"))
@@ -94,13 +135,18 @@ class UtilkitModule(reactContext: ReactApplicationContext) :
       val bytesRead = readChunk(reactApplicationContext, filePath, bytesProcessed, buffer)
 
       if (bytesRead > 0) {
+
         val requestBody =
-          buffer.toRequestBody("application/octet-stream".toMediaTypeOrNull(), 0, bytesRead)
+          if (multipartBody.isBlank()) {
+            buffer.toRequestBody("application/octet-stream".toMediaTypeOrNull(), 0, bytesRead)
+          } else {
+            getMultipartBody(File(filePath).name, multipartBody, buffer, bytesRead)
+          }
 
         var requestBuilder = Request.Builder()
           .url(uploadUrl);
 
-        requestBuilder = when(method){
+        requestBuilder = when (method) {
           "get" -> requestBuilder.get()
           "put" -> requestBuilder.put(requestBody)
           "patch" -> requestBuilder.patch(requestBody)
@@ -112,13 +158,22 @@ class UtilkitModule(reactContext: ReactApplicationContext) :
 
         val headersJson = JSONObject(headers)
         headersJson.keys().forEach {
-          val value = headersJson.getString(it)
+          var value = headersJson.getString(it)
+          if (value.contains(_MD5)) {
+            if (md5Value.isBlank()) {
+              md5Value = md5(buffer)
+            }
+            value = value.replace(_MD5, md5Value)
+          }
           requestBuilder.addHeader(it, value)
         }
 
         val request = requestBuilder.build()
 
-        Log.d("Utilkit", "Uploading chunk $bytesProcessed/$totalBytes @ ${request.method} ${request.url} ${request.headers} length=${request.body?.contentLength()}")
+        Log.d(
+          "Utilkit",
+          "Uploading chunk $bytesProcessed/$totalBytes @ ${request.method} ${request.url} ${request.headers} length=${request.body?.contentLength()}"
+        )
         client.newCall(request).enqueue(object : okhttp3.Callback {
           override fun onFailure(call: Call, e: IOException) {
             Log.e("Utilkit", "Upload Err: ${e.message}")
