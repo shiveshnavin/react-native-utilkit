@@ -42,8 +42,8 @@ import okhttp3.Call
 import okhttp3.MultipartBody
 import org.json.JSONObject
 import java.io.File
-import java.math.BigInteger
 import java.security.MessageDigest
+import java.util.Base64
 
 
 @Suppress("UNCHECKED_CAST")
@@ -70,17 +70,37 @@ class UtilkitModule(reactContext: ReactApplicationContext) :
   }
 
   val HASH_KEY = "@hash:"
-  private fun replaceWithHash(value: String, context: ReactContext, filePath: String): String {
+  private fun replaceWithFileHash(value: String, context: ReactContext, filePath: String): String {
     if (value.contains(HASH_KEY)) {
-      val algo = extractHashAlgorithm(value)
+      val algo = hashAlgorithm(value, HASH_KEY)
       if (algo != null)
         return value.replace("$HASH_KEY$algo@", hashFile(context, filePath, algo))
     }
     return value
   }
 
-  private fun extractHashAlgorithm(input: String): String? {
-    val regex = "@hash:([a-zA-Z0-9-]+)@".toRegex()
+  val DIGEST_KEY = "@digest:"
+  private fun replaceWithBufferDigest(
+    value: String,
+    buffer: ByteArray
+  ): String {
+    if (value.contains(DIGEST_KEY)) {
+      val algo = hashAlgorithm(value, DIGEST_KEY)
+      if (algo != null) {
+        val digest = MessageDigest.getInstance(algo).digest(buffer)
+        val base64Digest = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+          Base64.getEncoder().encodeToString(digest)
+        } else {
+          android.util.Base64.encodeToString(digest, android.util.Base64.DEFAULT)
+        }
+        return value.replace("$DIGEST_KEY$algo@", base64Digest)
+      }
+    }
+    return value
+  }
+
+  private fun hashAlgorithm(input: String, key: String): String? {
+    val regex = "$key([a-zA-Z0-9-]+)@".toRegex()
     val matchResult = regex.find(input)
     return matchResult?.groups?.get(1)?.value
   }
@@ -104,7 +124,10 @@ class UtilkitModule(reactContext: ReactApplicationContext) :
         multipartBodyBuilder.addFormDataPart(key, fileName, fileContentRequestBody)
       } else {
         if (value.contains(HASH_KEY)) {
-          value = replaceWithHash(value, reactApplicationContext, filePath)
+          value = replaceWithFileHash(value, reactApplicationContext, filePath)
+        }
+        if (value.contains(DIGEST_KEY)) {
+          value = replaceWithBufferDigest(value, buffer)
         }
         multipartBodyBuilder.addFormDataPart(key, value)
       }
@@ -114,7 +137,7 @@ class UtilkitModule(reactContext: ReactApplicationContext) :
 
 
   @ReactMethod
-  fun hash(filePath: String, algorithm: String, promise: Promise){
+  fun hash(filePath: String, algorithm: String, promise: Promise) {
     val hash = hashFile(reactApplicationContext, filePath, algorithm)
     promise.resolve(hash)
   }
@@ -170,7 +193,10 @@ class UtilkitModule(reactContext: ReactApplicationContext) :
         headersJson.keys().forEach {
           var value = headersJson.getString(it)
           if (value.contains(HASH_KEY)) {
-            value = replaceWithHash(value, reactApplicationContext, filePath)
+            value = replaceWithFileHash(value, reactApplicationContext, filePath)
+          }
+          if (value.contains(DIGEST_KEY)) {
+            value = replaceWithBufferDigest(value, buffer)
           }
           requestBuilder.addHeader(it, value)
         }
