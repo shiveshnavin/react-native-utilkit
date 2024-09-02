@@ -95,27 +95,18 @@ https://content.dropboxapi.com/2/files/upload_session/finish file:///data/user/0
  content://com.android.providers.downloads.documents/document/msf%3A1000068137
 
            */
-          let results = await Utilkit.pickFile('*/*')
-          console.log('picker results', results)
           let chunkSize = 1 * 1024 * 1024
           let readed: string = await new Promise((resolve, reject) => {
-            Utilkit.readAndUploadChunk('https://content.dropboxapi.com/2/files/upload_session/finish',
+            Utilkit.readAndUploadChunk('https://upload.box.com/api/2.0/files/content?fields=id',
               "post",
               {
-                "authorization": `Bearer sl.B8Ek3Uq92R9KVDLG1DwORQS2LFU1GDOS5mg765DdAgGlvhHj4uw7XxuWXTDYabtlD9gyfNuIKSEtyaFTggRZdn63b0WeNh_77jOWMWCwp21u_H-hck-mtH3c66M2pSvIeiJecDJoxaeMQEw`,
-                "dropbox-api-arg": {
-                  "commit": {
-                    "autorename": true, "mode": "add", "mute": false,
-                    "path": `/PaperDrive/notebooks/10047/page-1/${Date.now()}_7760__test.avi`,
-                    "strict_conflict": false
-                  },
-                  "cursor": {
-                    "offset": 0,
-                    "session_id": "pid_upload_session:ABIIMsXX4LizTOaAU-KhEpCzET6xfJD-6abtqC-RV4044tq8GQ"
-                  }
-                }
+                "authorization": `Bearer na8gesbL2uAuVvJK72lqXAXp0wYO0nrE`,
+                "content-md5": "f649f73d51bc965d16534e8d69580a2e1f2b2940"
               },
-              undefined,
+              {
+                "attributes": `{\"name\":\"space_out.mp4\",\"parent\":{\"id\":\"281281698815\"},\"content_created_at\":\"2024-12-12T10:53:43-08:00\",\"content_modified_at\":\"2024-12-12T10:53:43-08:00\"}`,
+                "file": "@file"
+              },
               0,
               978355,
               chunkSize,
@@ -135,9 +126,9 @@ https://content.dropboxapi.com/2/files/upload_session/finish file:///data/user/0
                 setResult(JSON.stringify(e))
               }
             ).then(r => {
-              // setResult(JSON.stringify(r))
+              setResult(JSON.stringify(r))
             }).catch((e) => {
-              // setResult(JSON.stringify(e))
+              setResult(JSON.stringify(e))
             })
           })
         }

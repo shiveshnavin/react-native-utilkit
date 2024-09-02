@@ -26,6 +26,7 @@ import com.utilkit.lib.service.transfers.CloudFile
 import com.utilkit.lib.service.transfers.CloudProvider
 import com.utilkit.lib.service.transfers.DownloadManagerService
 import com.utilkit.lib.service.transfers.FileTransferModel
+import com.utilkit.lib.service.transfers.hashFile
 import com.utilkit.lib.service.transfers.readChunk
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
@@ -68,17 +69,27 @@ class UtilkitModule(reactContext: ReactApplicationContext) :
     promise.resolve(a * b)
   }
 
-  private fun md5(bytes: ByteArray): String {
-    val md = MessageDigest.getInstance("MD5")
-    val digest = md.digest(bytes)
-    val bigInt = BigInteger(1, digest)
-    return bigInt.toString(16).padStart(32, '0')
+  val HASH_KEY = "@hash:"
+  private fun replaceWithHash(value: String, context: ReactContext, filePath: String): String {
+    if (value.contains(HASH_KEY)) {
+      val algo = extractHashAlgorithm(value)
+      if (algo != null)
+        return value.replace("$HASH_KEY$algo@", hashFile(context, filePath, algo))
+    }
+    return value
+  }
+
+  private fun extractHashAlgorithm(input: String): String? {
+    val regex = "@hash:([a-zA-Z0-9-]+)@".toRegex()
+    val matchResult = regex.find(input)
+    return matchResult?.groups?.get(1)?.value
   }
 
   private fun getMultipartBody(
     fileName: String,
     multipartBodyJson: String,
     buffer: ByteArray,
+    filePath: String,
     bytesRead: Int
   ): MultipartBody {
     var md5Value = ""
@@ -92,11 +103,8 @@ class UtilkitModule(reactContext: ReactApplicationContext) :
           buffer.toRequestBody("application/octet-stream".toMediaTypeOrNull(), 0, bytesRead)
         multipartBodyBuilder.addFormDataPart(key, fileName, fileContentRequestBody)
       } else {
-        if (value.contains(_MD5)) {
-          if (md5Value.isBlank()) {
-            md5Value = md5(buffer)
-          }
-          value = value.replace(_MD5, md5Value)
+        if (value.contains(HASH_KEY)) {
+          value = replaceWithHash(value, reactApplicationContext, filePath)
         }
         multipartBodyBuilder.addFormDataPart(key, value)
       }
@@ -104,7 +112,13 @@ class UtilkitModule(reactContext: ReactApplicationContext) :
     return multipartBodyBuilder.build()
   }
 
-  val _MD5 = "@md5"
+
+  @ReactMethod
+  fun hash(filePath: String, algorithm: String, promise: Promise){
+    val hash = hashFile(reactApplicationContext, filePath, algorithm)
+    promise.resolve(hash)
+  }
+
 
   @ReactMethod
   fun readAndUploadChunk(
@@ -126,11 +140,7 @@ class UtilkitModule(reactContext: ReactApplicationContext) :
     }
 
     try {
-//      val localFile = File(filePath)
-//      if (!localFile.exists()) {
-//        onComplete.reject(RuntimeException("File not found at $localFile"))
-//        return
-//      }
+
       val buffer = ByteArray(chunkSize)
       val bytesRead = readChunk(reactApplicationContext, filePath, bytesProcessed, buffer)
 
@@ -140,7 +150,7 @@ class UtilkitModule(reactContext: ReactApplicationContext) :
           if (multipartBody.isBlank()) {
             buffer.toRequestBody("application/octet-stream".toMediaTypeOrNull(), 0, bytesRead)
           } else {
-            getMultipartBody(File(filePath).name, multipartBody, buffer, bytesRead)
+            getMultipartBody(File(filePath).name, multipartBody, buffer, filePath, bytesRead)
           }
 
         var requestBuilder = Request.Builder()
@@ -159,11 +169,8 @@ class UtilkitModule(reactContext: ReactApplicationContext) :
         val headersJson = JSONObject(headers)
         headersJson.keys().forEach {
           var value = headersJson.getString(it)
-          if (value.contains(_MD5)) {
-            if (md5Value.isBlank()) {
-              md5Value = md5(buffer)
-            }
-            value = value.replace(_MD5, md5Value)
+          if (value.contains(HASH_KEY)) {
+            value = replaceWithHash(value, reactApplicationContext, filePath)
           }
           requestBuilder.addHeader(it, value)
         }
@@ -177,6 +184,7 @@ class UtilkitModule(reactContext: ReactApplicationContext) :
         client.newCall(request).enqueue(object : okhttp3.Callback {
           override fun onFailure(call: Call, e: IOException) {
             Log.e("Utilkit", "Upload Err: ${e.message}")
+            e.printStackTrace()
             onComplete.reject(e)
           }
 
@@ -199,7 +207,8 @@ class UtilkitModule(reactContext: ReactApplicationContext) :
       } else {
         onComplete.reject(RuntimeException("No data read"))
       }
-    } catch (e: IOException) {
+    } catch (e: Exception) {
+      e.printStackTrace()
       onComplete.reject(e)
     }
   }

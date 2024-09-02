@@ -21,6 +21,10 @@ export function pickFile(payload: string): Promise<PickedFile> {
   throw new Error("pickFile Not implemented on web")
 }
 
+export function hash(filePath: string, algo: string): Promise<string> {
+  throw new Error("hash Not implemented on web")
+}
+
 export const download = function (
   cloudFile: any,
   url: string,
