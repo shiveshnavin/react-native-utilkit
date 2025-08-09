@@ -161,22 +161,15 @@
     "output": "lib",
     "targets": [
       [
-        "commonjs",
-        {
-          "esm": true
-        }
+        "commonjs"
       ],
       [
-        "module",
-        {
-          "esm": true
-        }
+        "module"
       ],
       [
         "typescript",
         {
-          "project": "tsconfig.build.json",
-          "esm": true
+          "project": "tsconfig.build.json"
         }
       ]
     ]
